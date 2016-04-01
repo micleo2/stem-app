@@ -24,4 +24,8 @@ io.on("connection", function(socket){
 child.stdout.on('data', function(data) {
 	getData.push(data + "");
 	io.emit("program-update", data + "");
-});  
+}); 
+
+child.on("close", function(code){
+	io.emit("program-termination", code);
+});
