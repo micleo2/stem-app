@@ -1,7 +1,7 @@
 var child_process = require('child_process');
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var fs = require('fs');
+var server = require('http').createServer(onReq);
+var io = require('socket.io')(server);
 
 var getData = [];
 
@@ -9,12 +9,8 @@ var child = child_process.spawn(
   'java', ['-jar', 'NN_runner.jar']
 );
 
-app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
-});
-
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+server.listen(3000, function(){
+	console.log("Listening on port 3000");
 });
 
 io.on("connection", function(socket){
@@ -22,10 +18,23 @@ io.on("connection", function(socket){
 });
 
 child.stdout.on('data', function(data) {
-	getData.push(data + "");
-	io.emit("program-update", data + "");
+	var strData = data + "";
+	if (strData == "\n" || strData == "\t"){
+		return;
+	}
+	getData.push(strData);
+	io.emit("program-update", strData);
 }); 
 
 child.on("close", function(code){
 	io.emit("program-termination", code);
 });
+
+function onReq(req, res){
+	console.log("Serving...")
+	fs.readFile('index.html',function (err, data){
+		res.writeHead(200, {'Content-Type': 'text/html','Content-Length':data.length});
+		res.write(data);
+		res.end();
+	});
+}
