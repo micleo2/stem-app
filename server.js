@@ -4,6 +4,7 @@ var server = require('http').createServer(onReq);
 var io = require('socket.io')(server);
 
 var getData = [];
+var programCode = -1;
 
 var child = child_process.spawn(
   'java', ['-jar', 'NN_runner.jar']
@@ -15,6 +16,9 @@ server.listen(3000, function(){
 
 io.on("connection", function(socket){
 	io.emit("catch-up", getData);
+  if (programCode !== -1){
+    io.emit("program-termination", programCode);
+  }
 });
 
 child.stdout.on('data', function(data) {
@@ -24,10 +28,10 @@ child.stdout.on('data', function(data) {
 	}
 	getData.push(strData);
 	io.emit("program-update", strData);
-}); 
+});
 
 child.on("close", function(code){
-	io.emit("program-termination", code);
+	onClose(code);
 });
 
 function onReq(req, res){
@@ -37,4 +41,9 @@ function onReq(req, res){
 		res.write(data);
 		res.end();
 	});
+}
+
+function onClose(code){
+  io.emit("program-termination", code);
+  programCode = code;
 }
