@@ -10,7 +10,7 @@ var child = child_process.spawn(
   'java', ['-jar', 'NN_runner.jar']
 );
 
-server.listen(3000, function(){
+server.listen(process.env.PORT || 3000, function(){
 	console.log("Listening on port 3000");
 });
 
